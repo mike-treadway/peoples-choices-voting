@@ -1,4 +1,6 @@
 .idea
 config/local.json
 node_modules
-data
+data/data.json
+data/processed.json
+package-lock.json
