@@ -1,4 +1,3 @@
-const client = require('twilio')(accountSid, authToken);
 let last = new Date("12/1/2019");
 const disableSend = false;
 const
@@ -14,6 +13,7 @@ const accountSid = config.twilio.accountSid;
 const authToken = config.twilio.authToken;
 const logger = log4js.getLogger("server");
 const store = new Store(`${__dirname}/../data`);
+const client = require('twilio')(accountSid, authToken);
 
 // Check configuration
 if (!accountSid){
