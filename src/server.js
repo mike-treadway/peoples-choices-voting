@@ -32,18 +32,23 @@ poll();
 setInterval(poll, 1000);
 
 async function poll(){
-    let messages = await client.messages
-        .list({
-            "dateSentAfter": last,
-            to: "+18312260114",
-            limit: 20
-        });
+    try{
+        let messages = await client.messages
+            .list({
+                "dateSentAfter": last,
+                to: "+18312260114",
+                limit: 20
+            });
 
-    messages = _.orderBy(messages, ['dateSent'], ['asc']);
-    _.forEach(messages, processMessage);
-    let next = _(messages).map(m => new Date(m.dateSent)).max();
-    if (next){
-        last = new Date(next.getTime() + 1000);
+        messages = _.orderBy(messages, ['dateSent'], ['asc']);
+        _.forEach(messages, processMessage);
+        let next = _(messages).map(m => new Date(m.dateSent)).max();
+        if (next){
+            last = new Date(next.getTime() + 1000);
+        }
+    }
+    catch(e){
+        logger.error(e);
     }
 }
 

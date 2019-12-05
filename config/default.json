@@ -1,8 +1,4 @@
 {
-  "twilio": {
-    "accountSid": "ACf237f309ba15f9fce16c023e62640d80",
-    "authToken": "fae33d2cc7223bad67966b586883f510"
-  },
   "log4js": {
     "appenders": {
       "console": {
@@ -20,6 +16,5 @@
         "level": "debug"
       }
     }
-  },
-  "admins": ["9402068937"]
+  }
 }
