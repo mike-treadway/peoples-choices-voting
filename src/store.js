@@ -12,6 +12,7 @@ class Store{
         this._processed = null;
         this._dataPath = path + `/data.json`;
         this._processedPath = path + `/processed.json`;
+        this._path = path;
         this._load();
     }
 
@@ -60,17 +61,24 @@ class Store{
             this._data = { registration:{}, participants: {} };
             let codes = [];
             logger.info("Generating registration codes...");
-            while(codes.length < 1000){
+            const maxCodes = 500;
+            while(codes.length < maxCodes){
                 const code = Math.round(Math.random() * 99999).toString().padStart(5, "0");
                 codes.push(code);
 
-                if (codes.length === 1000){
+                if (codes.length === maxCodes){
                     codes = _.uniq(codes);
                 }
                 this._data.registration[code] = { owner: null };
             }
 
             this.save();
+
+            let csv = "";
+            _(codes).forEach(c => {
+                csv += `"${c}"\n`
+            });
+            fs.writeFileSync(this._path + "/codes.csv", csv);
         }
 
         try{

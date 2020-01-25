@@ -1,6 +1,7 @@
 {
   "twilio": {
     "accountSid": "",
-    "authToken": ""
+    "authToken": "",
+    "messagingServiceSid": ""
   }
 }

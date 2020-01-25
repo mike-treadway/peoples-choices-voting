@@ -3,4 +3,5 @@ config/local.json
 node_modules
 data/data.json
 data/processed.json
+data/*.csv
 package-lock.json

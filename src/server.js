@@ -13,7 +13,14 @@ const accountSid = config.twilio.accountSid;
 const authToken = config.twilio.authToken;
 const logger = log4js.getLogger("server");
 const store = new Store(`${__dirname}/../data`);
+const moment = require('moment');
 const client = require('twilio')(accountSid, authToken);
+
+const schedule = config.schedule;
+if (schedule){
+    schedule.start = moment(schedule.start || undefined);
+    schedule.end = schedule.end ? moment(schedule.end) : undefined;
+}
 
 // Check configuration
 if (!accountSid){
@@ -81,21 +88,34 @@ function processMessage(message){
 }
 
 function showResults(user){
-    const results = _(store.participants)
-        .values()
-        .map(v => v.votes)
-        .flatten()
-        .groupBy(id => id)
-        .mapValues((votes, id) => { return { id: id, votes: votes.length } })
-        .values()
-        .orderBy(['votes'], ['desc'])
-        .take(5)
-        .value();
 
-    let response = "Results:\n";
-    for(result of results){
-        let candidate = candidates[result.id];
-        response += `${candidate} (${result.votes} votes)\n`
+    // For each category
+    const categories = _(config.categories).map(c => c.name).value();
+    let response = "Results:\n\n";
+
+    for(let category of categories){
+        const results = _(store.participants)
+            .values()
+            .map(p => p.votes[category])
+            .flatten()
+            .filter(v => !!v)
+            .groupBy(id => id)
+            .mapValues((votes, id) => { return { id: id, votes: votes.length } })
+            .values()
+            .orderBy(['votes'], ['desc'])
+            .take(5)
+            .value();
+
+        if (results.length > 0) {
+            response += `${category}:\n`;
+
+            for (result of results) {
+                let candidate = candidates[result.id];
+                response += `  ${candidate} (${result.votes} votes)\n`
+            }
+
+            response += "\n";
+        }
     }
     reply(user, response);
 }
@@ -113,15 +133,19 @@ function showVotes(user){
     }
 
     let response = "";
-    if (participant.votes.length === 0){
+    if (_.keys(participant.votes) === 0){
         response = "You have not voted yet!";
     } else{
-        response = "Your votes:\n";
-        for(id of participant.votes){
-            let candidate = candidates[id];
-            if (candidate){
-                response+=`${id} - ${candidate}\n`;
+        response = "Your votes:\n\n";
+
+        for(let category in participant.votes){
+            response += `${category}:\n`
+
+            for(let id of participant.votes[category]){
+                response+=`  ${id} - ${candidates[id]}\n`;
             }
+
+            response += "\n";
         }
         response = response.trim();
     }
@@ -129,12 +153,20 @@ function showVotes(user){
     reply(user, response);
 }
 
+function getCategory(candidateId){
+    const category = _.find(config.categories, c => candidateId.match(new RegExp(c.regex)));
+
+    if (category){
+        return category.name;
+    }
+}
+
 function vote(user, body){
     // Make sure this is a known participant
     const participant = store.participants[user];
 
     // Add their vote
-    const id = body.trim();
+    const id = body.trim().toUpperCase();
     const candidate = candidates[id];
     if (!candidate){
         reply(user, `The value '${id}' is not a registered entry. Please try again.`);
@@ -142,14 +174,17 @@ function vote(user, body){
     }
 
     const maxVotes = config.maxVotes || 2;
-    participant.votes.push(id);
-    participant.votes = _.uniq(participant.votes);
-    participant.votes = participant.votes.slice(participant.votes.length - maxVotes);
+    const category = getCategory(id);
+    let votes = participant.votes[category] || [];
+    votes.push(id);
+    votes = _.uniq(votes);
+    participant.votes[category] = votes = votes.slice(votes.length - maxVotes);
+    const response = `Vote for "${candidate}" for "${category}" was recieved!`;
 
-    if (participant.votes.length === maxVotes){
-        reply(user, `Vote for "${candidate}" was recieved! You have finished voting.\n\nYou may keep enter votes, however only your last 2 votes will be counted.`);
+    if (votes.length === maxVotes){
+        reply(user, `${response}\n\nYou may keep entering votes, however only your last 2 votes for each category will be counted.`);
     } else {
-        reply(user, `Vote for "${candidate}" was recieved! You have ${maxVotes - participant.votes.length} votes left.\n\nSend VOTES to see what you've voted for.`);
+        reply(user, `${response} You have ${maxVotes - votes.length} votes left for "${category}".\n\nSend VOTES to see what you've voted for.`);
     }
 
     store.save();
@@ -167,9 +202,9 @@ function register(user, code){
     }
 
     existing.owner = user;
-    store.participants[user] = { votes: [] };
+    store.participants[user] = { votes: {} };
     store.save();
-    reply(user, "Thanks! You are registered to vote!\n\nWhen voting is opened, send the entry # you'd like to vote for.");
+    reply(user, `Thanks! You are registered to vote!\n\nWhen voting is opened on ${schedule.start.format("dddd, hA")}, send the entry # you'd like to vote for.`);
 }
 
 function reply(user, message){
@@ -181,7 +216,7 @@ function reply(user, message){
 
     client.messages.create({
         body: message,
-        messagingServiceSid: "MG165d660556d3d3b015fb9ccc21caeba4",
+        messagingServiceSid: config.twilio.messagingServiceSid,
         to: user
     })
         .then(m => logger.info(`Sent message: ${message}`))

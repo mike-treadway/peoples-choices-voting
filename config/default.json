@@ -1,4 +1,13 @@
 {
+  "categories": [
+    {"name": "Best Beer", "regex": ".*BB"},
+    {"name": "Best Food Pairing", "regex": ".*FP"},
+    {"name": "People's Choice", "regex": ".*"}
+  ],
+  "schedule": {
+    "start": null,
+    "end": null
+  },
   "log4js": {
     "appenders": {
       "console": {
