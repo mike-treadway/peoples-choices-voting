@@ -1,11 +1,9 @@
 {
   "categories": [
-    {"name": "Best Beer", "regex": ".*BB"},
-    {"name": "Best Food Pairing", "regex": ".*FP"},
     {"name": "People's Choice", "regex": ".*"}
   ],
   "schedule": {
-    "start": null,
+    "start": "3/21/2020 8:00 PM",
     "end": null
   },
   "log4js": {

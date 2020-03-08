@@ -18,7 +18,7 @@ const client = require('twilio')(accountSid, authToken);
 
 const schedule = config.schedule;
 if (schedule){
-    schedule.start = moment(schedule.start || undefined);
+    schedule.start = moment(schedule.start || undefined, "MM/DD/YYYY hh:mm a");
     schedule.end = schedule.end ? moment(schedule.end) : undefined;
 }
 
@@ -35,8 +35,8 @@ if (!authToken){
 
 // Start a poll timer
 last = getLastProcessed();
-poll();
-setInterval(poll, 1000);
+//poll();
+//setInterval(poll, 1000);
 
 async function poll(){
     try{
@@ -191,6 +191,7 @@ function vote(user, body){
 }
 
 function register(user, code){
+    code = code.toUpperCase();
     let existing = store.registration[code];
     if (!existing){
         reply(user, "The access code you entered is not valid. Check the number and try again.");

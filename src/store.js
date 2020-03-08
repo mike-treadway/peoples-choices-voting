@@ -61,9 +61,13 @@ class Store{
             this._data = { registration:{}, participants: {} };
             let codes = [];
             logger.info("Generating registration codes...");
-            const maxCodes = 500;
+            const maxCodes = 1000;
             while(codes.length < maxCodes){
-                const code = Math.round(Math.random() * 99999).toString().padStart(5, "0");
+                const code = Math.round(Math.random() * 16777215)
+                    .toString("16")
+                    .padStart(6, "0")
+                    .toUpperCase()
+                    .replace(/(...)(...)/gi, "$1-$2");
                 codes.push(code);
 
                 if (codes.length === maxCodes){
@@ -74,7 +78,7 @@ class Store{
 
             this.save();
 
-            let csv = "";
+            let csv = "\"Code\"\n";
             _(codes).forEach(c => {
                 csv += `"${c}"\n`
             });
