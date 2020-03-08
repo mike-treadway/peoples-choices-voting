@@ -35,8 +35,8 @@ if (!authToken){
 
 // Start a poll timer
 last = getLastProcessed();
-//poll();
-//setInterval(poll, 1000);
+poll();
+setInterval(poll, 1000);
 
 async function poll(){
     try{
